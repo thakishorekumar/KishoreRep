@@ -1,0 +1,61 @@
+const AWS = require('aws-sdk');
+const axios = require('axios');
+const crypto = require('crypto');
+ 
+exports.handler = async (event) => {
+    // Set your AWS credentials
+    const accessKeyId = 'YOUR_ACCESS_KEY_ID';
+    const secretAccessKey = 'YOUR_SECRET_ACCESS_KEY';
+    const region = 'YOUR_AWS_REGION';
+ 
+    // Set the service and endpoint
+    const service = 'connect';
+const endpoint = 'connect.your-region.amazonaws.com'; // Replace with your Connect endpoint
+ 
+    // Set the HTTP method and path
+    const method = 'GET';
+    const path = '/'; // Replace with your Connect API resource path
+ 
+    // Set the request parameters
+    const queryParams = {
+        'param1': 'value1',
+        'param2': 'value2',
+    };
+ 
+    // Generate the request URL
+    const requestUrl = `https://${endpoint}${path}?${AWS.util.queryParamsToString(queryParams)}`;
+ 
+    // Set the current time
+    const now = new Date();
+ 
+    // Create a date string and a timestamp
+    const amzDate = now.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    const dateStamp = amzDate.slice(0, 8);
+ 
+    // Create the canonical request
+    const canonicalRequest = [
+        method,
+        path,
+        AWS.util.queryParamsToString(queryParams),
+        'host:' + endpoint,
+        'x-amz-date:' + amzDate,
+        '',
+        'host;x-amz-date',
+        crypto.createHash('sha256').update('').digest('hex'),
+    ].join('\n');
+ 
+    // Create the string to sign
+    const stringToSign = [
+        'AWS4-HMAC-SHA256',
+        amzDate,
+        `${dateStamp}/${region}/${service}/aws4_request`,
+        crypto.createHash('sha256').update(canonicalRequest).digest('hex'),
+    ].join('\n');
+ 
+    // Generate the signing key
+    const signingKey = AWS.util.crypto.hmac(
+        `AWS4${secretAccessKey}`,
+        dateStamp
+    );
+    const signature = AWS.util.crypto.hmac(
+  
