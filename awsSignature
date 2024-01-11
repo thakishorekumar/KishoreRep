@@ -58,4 +58,44 @@ const endpoint = 'connect.your-region.amazonaws.com'; // Replace with your Conne
         dateStamp
     );
     const signature = AWS.util.crypto.hmac(
-  
+        signingKey,
+        stringToSign,
+        'hex'
+    );
+ 
+    // Create the Authorization header
+    const authorizationHeader = [
+        `AWS4-HMAC-SHA256 Credential=${accessKeyId}/${dateStamp}/${region}/${service}/aws4_request`,
+        `SignedHeaders=host;x-amz-date`,
+        `Signature=${signature}`,
+    ].join(', ');
+ 
+    // Set up the Axios request options
+    const axiosOptions = {
+        method: method,
+        url: requestUrl,
+        headers: {
+            'host': endpoint,
+            'x-amz-date': amzDate,
+            'Authorization': authorizationHeader,
+        },
+    };
+ 
+    try {
+        // Make the Axios request
+        const response = await axios(axiosOptions);
+        console.log('Response:', response.data);
+ 
+        return {
+            statusCode: 200,
+            body: JSON.stringify(response.data),
+        };
+    } catch (error) {
+        console.error('Error:', error.message);
+ 
+        return {
+            statusCode: 500,
+            body: JSON.stringify({ error: 'Internal Server Error' }),
+        };
+    }
+};
